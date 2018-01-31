@@ -31,10 +31,15 @@ OPTIONALS
 
 CODE_REPLACEMENT
     The following code manipulation is done for all files within OUT_DIR:
-    - Lines containing '{{ minifu:remove }}' are deleted
-    - Lines containing '{{ minifu:css:KEY }}' is replaced with:
+
+    When using --css flag:
+        - Lines containing '{{ minifu:remove:css:KEY }}' are deleted
+        - Lines containing '{{ minifu:add:css:KEY }}' is replaced with:
         <link rel=\"stylesheet\" href=\"PREFIX/KEY.<MD5>.min.css\">
-    - Lines containing '{{ minifu:js:KEY }}' is replaced with:
+
+    When using --js flag:
+        - Lines containing '{{ minifu:remove:js:KEY }}' are deleted
+        - Lines containing '{{ minifu:add:js:KEY }}' is replaced with:
         <script src=\"PREFIX/KEY.<MD5>.min.js\"></script>
 
 EXAMPLE
@@ -45,14 +50,14 @@ EXAMPLE
     using the md5sum of the minified data. If no changes are made, the filename
     will remain unchanged.
 
-    Additionally, it will replace all occurences of {{ minifu:css:KEY }} with
+    Additionally, it will replace all occurences of {{ minifu:add:css:KEY }} with
     <link rel=\"stylesheet\" href=\"web/css/styles.b7ef6cae.min.css\">
 
 REQUIREMENTS:
     yui-compressor (http://yui.github.io/yuicompressor/)
 
 Author:     Roald Fernandez (contact@swarminglogic.com)
-Version:    0.1.0 (2018-01-30)
+Version:    0.1.1 (2018-01-30)
 License:    MIT
 "
     exit $1
@@ -181,7 +186,9 @@ debug_args() {
 # Main
 ###################################
 parse_arguments "$@"
-tmp_file=$(tempfile)
+tmp_file=$(mktemp)
+chmod 664 ${tmp_file}
+
 # Minify files
 <<<$src_files xargs cat | yui-compressor --type ${type_fw} > $tmp_file
 yui_exit_code=$?
@@ -201,17 +208,16 @@ fi
 
 pushd "$src_dir" > /dev/null
     # Remove entries containing {{ minifu:remove }}
-    find . -type f -print0 | xargs -0 sed -i '/{{[ ]*minifu:remove[ ]*}}/d'
+    find . -type f -print0 | xargs -0 sed -i "/{{[ ]*minifu:remove:${type_fw}:${key}[ ]*}}/d"
     # Add js|css entries
     out_href="${prefix}/${gen_file}"
     tag_replace=
-    replace_appended="<!-- {{ minifu:${type_fw}:${key} }} -->"
     if [ "${type_fw}" = "css" ] ; then
         tag_replace="<link rel=\"stylesheet\" href=\"${out_href}\">"
     elif [ "${type_fw}" = "js" ] ; then
         tag_replace="<script src=\"${out_href}\"></script>"
     fi
-    find . -type f -print0 | xargs -0 sed -i "s,^.*{{[ ]*minifu:${type_fw}:${key}[ ]*}}.*,${tag_replace}${replace_appended},"
+    find . -type f -print0 | xargs -0 sed -i "s,^.*{{[ ]*minifu:add:${type_fw}:${key}[ ]*}}.*,${tag_replace},"
 popd > /dev/null
 
 # Cleanup
