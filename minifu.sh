@@ -13,6 +13,8 @@ USAGE
 
     Performs code manipulation within SRC_DIR. See: CODE_REPLACEMENT
 
+    Returns path and name of created minimized file
+
 OPTIONS
     -h, --help              show this help text
     -v, --verbose           verbose output
@@ -205,6 +207,7 @@ gen_file_path="${out_dir}/${gen_file}"
 if [ ! -f ${gen_file_path} ] ; then
     mv "${tmp_file}" "${gen_file_path}"
 fi
+echo "${gen_file_path}"
 
 pushd "$src_dir" > /dev/null
     # Remove entries containing {{ minifu:remove }}

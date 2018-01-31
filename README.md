@@ -14,6 +14,8 @@ USAGE
 
     Performs code manipulation within SRC_DIR. See: CODE_REPLACEMENT
 
+    Returns path and name of created minimized file
+
 OPTIONS
     -h, --help              show this help text
     -v, --verbose           verbose output
